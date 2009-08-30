@@ -1,7 +1,15 @@
 Instructions:
 - General use should be obvious
+- To turn on diagnostic mode, enter "Diagnostic Mode" as your name (v1.1+)
 
 History:
+
+v1.1:
+- Fixed bugs with participants list
+- There is now an interface version, which clients use to check if they are compatible with a server
+- Interface version: 1.1
+- Various general bug fixes
+- Diagnostic Mode added
 
 v1.0:
 - First version

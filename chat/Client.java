@@ -25,4 +25,8 @@ public interface Client extends Remote,Serializable {
 	public void participant(String action, Client participant) throws Exception;
 	
 	public List<Client> getServerClientList() throws Exception;
+	
+	public void updateStatus(boolean onlineFlag) throws Exception;
+	
+	public boolean compatibilityCheck(String sip, String password, String version) throws Exception;
 }

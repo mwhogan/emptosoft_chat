@@ -35,4 +35,6 @@ public interface Server extends Remote,Serializable {
 	public boolean connected() throws Exception;
 	
 	public void updateStatus(Client client, Boolean flag) throws Exception;
+	
+	public String getInterfaceVersion() throws Exception;
 }

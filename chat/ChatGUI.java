@@ -42,40 +42,12 @@ public class ChatGUI  extends JFrame implements Serializable {
 	private String password;
 	public String name;
 	public String status = "Online";
-	public static String version = "1.0";
+	public static String version = "1.1";
+	public static String interfaceVersion = "1.1";
+	private boolean diagnosticMode = false;
 	protected final static ChatGUI gui = new ChatGUI();
 
 	public static void main(String[] args){
-		//Set up window listener
-		gui.addWindowListener(new WindowAdapter() {
-		    public void windowClosing(WindowEvent ev) {
-		        if(gui.type == true){
-		        	List<Client> clientList;
-					try {
-						clientList = gui.server.getClients();
-					} catch (Exception e) {
-						clientList = null;
-					}
-		        	for(Client c: clientList){
-		        		try{
-		        			c.disconnect();
-		        		} catch (Exception e){}
-		        	}
-		        } else {
-		        	try{
-		        		gui.client.unregister();
-		        	} catch (Exception e){}
-		        }
-		    }
-		        
-		    public void windowActivated(WindowEvent ev) {
-	            gui.messagePanel.field.requestFocus();
-	        }
-		    
-		    public void windowOpened(WindowEvent ev) {
-	            gui.messagePanel.field.requestFocus();
-	        }
-		});
 		gui.setVisible(true);
 	}
 	
@@ -85,11 +57,57 @@ public class ChatGUI  extends JFrame implements Serializable {
 		super();
 		setSize(640, 480);
 		setMinimumSize(new Dimension(400,400));
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLayout(new BorderLayout());
+		addWindowListener(new WindowAdapter() {
+		    public void windowClosing(WindowEvent ev) {
+		    	try{
+		    		if(type == true){
+		    			List<Client> clientList;
+		    			try {
+		    				clientList = server.getClients();
+		    			} catch (Exception e) {
+		    				clientList = null;
+		    			}
+		    			for(Client c: clientList){
+		    				try{
+		    					c.disconnect();
+		    				} catch (Exception e){}
+		    			}
+		    		} else {
+		    			try{
+		    				client.unregister();
+		    			} catch (Exception e){}
+		    		}
+		    	} catch (Exception e){}
+		    	System.exit(0);
+		    }
+		        
+		    public void windowActivated(WindowEvent ev) {
+	            messagePanel.field.requestFocus();
+	        }
+		    
+		    public void windowOpened(WindowEvent ev) {
+	            messagePanel.field.requestFocus();
+	        }
+		});
 		
 		//Get Display Name
-		name = JOptionPane.showInputDialog(this,Strings.INPUT_NAME,"Emptosoft Chat v" + version,JOptionPane.QUESTION_MESSAGE);
+		Boolean dnloop = true;
+		while(dnloop){
+			name = JOptionPane.showInputDialog(this,Strings.INPUT_NAME,"Emptosoft Chat v" + version,JOptionPane.QUESTION_MESSAGE);
+			try{
+				if(name.equals("Diagnostic Mode")){
+					diagnosticMode = true;
+					JOptionPane.showMessageDialog(this,Strings.MESSAGE_DIAGNOSTIC_MODE_ON,"Emptosoft Chat v" + version,JOptionPane.INFORMATION_MESSAGE);
+					name = null;
+				} else {
+					dnloop = false;
+				}
+			} catch(Exception e){
+				dnloop = false;
+			}
+		}
 		if(name == null || name.equals("")){
 			//Use IP as name
 			try {
@@ -126,7 +144,7 @@ public class ChatGUI  extends JFrame implements Serializable {
 			
 			popup.setMessage(Strings.MESSAGE_STARTING_SERVER);
 			// Create an instance of chat server ...
-			server = new ServerImpl(this);
+			server = new ServerImpl(this, interfaceVersion);
 			Server stubs = (Server) UnicastRemoteObject.exportObject(server, 0);
 			
 			//Ask for a server access password?
@@ -165,6 +183,7 @@ public class ChatGUI  extends JFrame implements Serializable {
 		add(createMessagePanel(), BorderLayout.SOUTH);
 		//Now register client
 		popup.setMessage(Strings.MESSAGE_REGISTERING_CLIENT);
+		@SuppressWarnings("unused") //It may be useful to have a remote reference to the client in the future
 		Client self = null;
 		try{
 			self = client.register(java.net.InetAddress.getLocalHost().getHostAddress(), "Chat Server");
@@ -173,7 +192,6 @@ public class ChatGUI  extends JFrame implements Serializable {
 			JOptionPane.showMessageDialog(this,getStackTrace(e),"Emptosoft Chat v" + version,JOptionPane.ERROR_MESSAGE);
 			System.exit(1);
 		}
-		addParticipant(self);
 		refresh();
 		popup.dispose();
 		messagePanel.field.selectAll();
@@ -213,22 +231,45 @@ public class ChatGUI  extends JFrame implements Serializable {
 		//PopupThread popupThread = new PopupThread(this);
 		//popupThread.start();
 		//Popup popup = popupThread.getPopup();
-		//popup.setMessage("Hello");
+		//popup.setMessage(Strings.MESSAGE_CLIENT_CHECKING_COMPATIBILITY);
+		diagnosticMode(Strings.MESSAGE_CLIENT_CHECKING_COMPATIBILITY + "\n");
 		//popup.repaint(10);
+		//Checking compatibility
+		try{
+			if(client.compatibilityCheck(newServerip, password, interfaceVersion)){
+				//compatible
+			} else {
+				//incompatible - abort
+				JOptionPane.showMessageDialog(this,Strings.MESSAGE_INCOMPATIBLE,"Emptosoft Chat v" + version,JOptionPane.INFORMATION_MESSAGE);
+				diagnosticMode(Strings.MESSAGE_INCOMPATIBLE + "\n");
+				//popup.dispose();
+				return false;
+			}
+		} catch (Exception e){
+			JOptionPane.showMessageDialog(this,Strings.MESSAGE_UNKNOWN_COMPATIBILITY,"Emptosoft Chat v" + version,JOptionPane.INFORMATION_MESSAGE);
+			diagnosticMode(Strings.MESSAGE_UNKNOWN_COMPATIBILITY + "\n");
+			//popup.dispose();
+		}
+		//Switching type
 		if(newType == true){				//if going into server mode, serverip will be null
 			//popup.setMessage(Strings.MESSAGE_TURNING_SERVER_OFF);
+			diagnosticMode(Strings.MESSAGE_TURNING_SERVER_OFF + "\n");
 			try {
 				server.off();
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(this,Strings.MESSAGE_SERVER_OFF_FAILED,"Emptosoft Chat v" + version,JOptionPane.INFORMATION_MESSAGE);
+				diagnosticMode(Strings.MESSAGE_SERVER_OFF_FAILED + "\n");
 				//popup.dispose();
 				return false;
 			}
 			//popup.setMessage(Strings.MESSAGE_TURNING_CLIENT_ON);
+			diagnosticMode(Strings.MESSAGE_TURNING_CLIENT_ON + "\n");
 			try{
 				client.register(newServerip, password);
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(this,Strings.MESSAGE_CLIENT_ON_FAILED,"Emptosoft Chat v" + version,JOptionPane.INFORMATION_MESSAGE);
+				diagnosticMode(Strings.MESSAGE_CLIENT_ON_FAILED + "\n");
+				diagnosticMode(Strings.MESSAGE_TURNING_SERVER_ON + "\n");
 				//popup.setMessage(Strings.MESSAGE_TURNING_SERVER_ON);
 				try{
 					server.on();
@@ -237,29 +278,33 @@ public class ChatGUI  extends JFrame implements Serializable {
 					client.register(sip, "Chat Server");
 				} catch (Exception f) {
 					JOptionPane.showMessageDialog(this,Strings.MESSAGE_CLIENT_ON_FAILED_SERVER_ON_FAILED,"Emptosoft Chat v" + version,JOptionPane.INFORMATION_MESSAGE);
+					diagnosticMode(Strings.MESSAGE_CLIENT_ON_FAILED_SERVER_ON_FAILED + "\n");
 					//popup.dispose();
 					System.exit(1);
 				}
 			}
-
 			type = newType;
 			serverip = newServerip;
 			clearParticipants();
 			populateParticipants();
 			refresh();
 			typePanel.setIP(serverip);
+			diagnosticMode(Strings.DIAGNOSTIC_TYPE_SET);
 			//popup.dispose();
 			return true;
 		} else {
 			//popup.setMessage(Strings.MESSAGE_TURNING_CLIENT_OFF);
+			diagnosticMode(Strings.MESSAGE_TURNING_CLIENT_OFF + "\n");
 			try{
 				client.unregister();
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(this,Strings.MESSAGE_CLIENT_OFF_FAILED,"Emptosoft Chat v" + version,JOptionPane.INFORMATION_MESSAGE);
+				diagnosticMode(Strings.MESSAGE_CLIENT_OFF_FAILED + "\n");
 				//popup.dispose();
 				return false;
 			}
 			//popup.setMessage(Strings.MESSAGE_TURNING_SERVER_ON);
+			diagnosticMode(Strings.MESSAGE_TURNING_SERVER_ON + "\n");
 			try {
 				server.on();
 				java.net.InetAddress i = java.net.InetAddress.getLocalHost();
@@ -267,6 +312,7 @@ public class ChatGUI  extends JFrame implements Serializable {
 				client.register(sip, "Chat Server");
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(this,Strings.MESSAGE_SERVER_ON_FAILED,"Emptosoft Chat v" + version,JOptionPane.ERROR_MESSAGE);
+				diagnosticMode(Strings.MESSAGE_SERVER_ON_FAILED + "\n");
 				//popup.dispose();
 				System.exit(1);
 			}
@@ -336,7 +382,7 @@ public class ChatGUI  extends JFrame implements Serializable {
 					onlineFlag = true;
 				}
 				try{
-					server.updateStatus(client,onlineFlag);
+					client.updateStatus(onlineFlag);
 					if(newStatus.equals("Offline")){
 						messagePanel.disable();
 					}
@@ -347,7 +393,7 @@ public class ChatGUI  extends JFrame implements Serializable {
 				} catch (Exception e){
 					status = temp;
 					try{
-						server.updateStatus(client,onlineFlag);
+						client.updateStatus(onlineFlag);
 					} catch(Exception f){}
 					if(newStatus.equals("Offline")){
 						messagePanel.enable();
@@ -384,6 +430,7 @@ public class ChatGUI  extends JFrame implements Serializable {
 	private boolean refresh() {
 		//Refresh logPanel and participantsPanel
 		//Can decrease load by checking for changes - message count? - ABANDONED, do in v2.0?
+		diagnosticMode(Strings.DIAGNOSTIC_REFRESH);
 		participantsPanel.refresh();
 		logPanel.clear();
 		try {
@@ -391,27 +438,29 @@ public class ChatGUI  extends JFrame implements Serializable {
 			logPanel.addMessage(messages);
 		} catch (Exception e) {
 			logPanel.addMessage(Strings.MESSAGE_REFRESH_FAILURE);
+			diagnosticMode(Strings.MESSAGE_REFRESH_FAILURE + "\n");
 			return false;
 		}
+		diagnosticMode(Strings.DIAGNOSTIC_REFRESH_SUCCESS);
 		return true;
 	}
 	
-	protected void updateParticipantStatus(Client client){
+	protected void updateParticipantStatus(Client updatedClient){
 		try{
-			participantsPanel.updateStatus(client);
+			participantsPanel.updateStatus(updatedClient);
 			participantsPanel.refresh();
 		} catch (Exception e){}
 	}
 	
-	protected void addParticipant(Client client){
+	protected void addParticipant(Client newClient){
 		try{
-			participantsPanel.add(client);
+			participantsPanel.add(newClient);
 			participantsPanel.refresh();
 		} catch (Exception e){}
 	}
 	
-	protected void removeParticipant(Client client){
-		participantsPanel.remove(client);
+	protected void removeParticipant(Client oldClient){
+		participantsPanel.remove(oldClient);
 		participantsPanel.refresh();
 	}
 	
@@ -422,13 +471,25 @@ public class ChatGUI  extends JFrame implements Serializable {
 	
 	public void populateParticipants(){
 		List<Client> clientList = null;
+		diagnosticMode(Strings.DIAGNOSTIC_POPULATING_PARTICIPANTS);
 		try{
 			clientList = client.getServerClientList();
 		} catch (Exception e) {
-			newMessage("Emptosoft Chat: " + Strings.MESSAGE_SERVER_DISCONNECTED);
+			diagnosticMode(Strings.DIAGNOSTIC_POPULATING_PARTICIPANTS_FAIL);
+			try{
+				client.disconnect();
+			} catch (Exception f){}
 		}
+		int temp = 1;
 		for (Client c: clientList){
+			diagnosticMode(Strings.DIAGNOSTIC_POPULATING_PARTICIPANTS_NUMBER + temp++ + "/" + clientList.size() + ".\n");
 			addParticipant(c);
+		}
+	}
+	
+	public void diagnosticMode(String message){
+		if(diagnosticMode){
+			newMessage(Strings.DIAGNOSTIC_MODE + message);
 		}
 	}
 }

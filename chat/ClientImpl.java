@@ -8,11 +8,11 @@ import java.util.List;
 public class ClientImpl implements Client {
 	
 	static final long serialVersionUID = 5810748830071717465L;
-	private ChatGUI parent;
+	private Chat parent;
 	public Server server;
 	private ClientConnectionThread connectionThread;
 
-	public ClientImpl(ChatGUI newParent) throws RemoteException {
+	public ClientImpl(Chat newParent) throws RemoteException {
 		super();
 		parent = newParent;
 	};
@@ -69,12 +69,12 @@ public class ClientImpl implements Client {
 	
 	public String getName(){
 		parent.diagnosticMode(Strings.DIAGNOSTIC_CLIENT_NAME_REQUEST);
-		return parent.name;
+		return parent.getName();
 	}
 	
 	public String getStatus(){
 		parent.diagnosticMode(Strings.DIAGNOSTIC_CLIENT_STATUS_QUERIED);
-		return parent.status;
+		return parent.getStatus();
 	}
 
 	public void participant(String action, Client participant){

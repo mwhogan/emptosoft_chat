@@ -28,7 +28,7 @@ import javax.swing.JOptionPane;
 
 
 
-public class ChatGUI  extends JFrame implements Serializable {
+public class ChatGUI  extends JFrame implements Serializable, Chat {
 	private static final long serialVersionUID = -4734351929459053907L;
 	private boolean type;				//0 = Server, 1 = Client
 	private String serverip;			//IP of server. IP of self if server.
@@ -42,13 +42,26 @@ public class ChatGUI  extends JFrame implements Serializable {
 	private String password;
 	public String name;
 	public String status = "Online";
-	public static String version = "1.1";
+	public static String version = "1.1c";
 	public static String interfaceVersion = "1.1";
 	private boolean diagnosticMode = false;
-	protected final static ChatGUI gui = new ChatGUI();
+	protected static ChatGUI gui = null;
+	protected static ChatConsole nogui = null;
 
 	public static void main(String[] args){
-		gui.setVisible(true);
+		try{
+			if(args[0].equals("-c")){
+				System.out.println("Emptosoft Chat v" + version);
+				nogui = new ChatConsole(interfaceVersion);
+				System.exit(0);
+			} else {
+				gui = new ChatGUI();
+				gui.setVisible(true);
+			}
+		} catch (ArrayIndexOutOfBoundsException e){
+			gui = new ChatGUI();
+			gui.setVisible(true);
+		}
 	}
 	
 	
@@ -227,7 +240,7 @@ public class ChatGUI  extends JFrame implements Serializable {
 
 	}
 
-	protected boolean setType(boolean newType, String newServerip){
+	public boolean setType(boolean newType, String newServerip){
 		//PopupThread popupThread = new PopupThread(this);
 		//popupThread.start();
 		//Popup popup = popupThread.getPopup();
@@ -427,7 +440,7 @@ public class ChatGUI  extends JFrame implements Serializable {
 		return new JScrollPane(holder);
 	}
 	
-	private boolean refresh() {
+	public boolean refresh() {
 		//Refresh logPanel and participantsPanel
 		//Can decrease load by checking for changes - message count? - ABANDONED, do in v2.0?
 		diagnosticMode(Strings.DIAGNOSTIC_REFRESH);
@@ -445,26 +458,26 @@ public class ChatGUI  extends JFrame implements Serializable {
 		return true;
 	}
 	
-	protected void updateParticipantStatus(Client updatedClient){
+	public void updateParticipantStatus(Client updatedClient){
 		try{
 			participantsPanel.updateStatus(updatedClient);
 			participantsPanel.refresh();
 		} catch (Exception e){}
 	}
 	
-	protected void addParticipant(Client newClient){
+	public void addParticipant(Client newClient){
 		try{
 			participantsPanel.add(newClient);
 			participantsPanel.refresh();
 		} catch (Exception e){}
 	}
 	
-	protected void removeParticipant(Client oldClient){
+	public void removeParticipant(Client oldClient){
 		participantsPanel.remove(oldClient);
 		participantsPanel.refresh();
 	}
 	
-	protected void clearParticipants(){
+	public void clearParticipants(){
 		participantsPanel.clear();
 		participantsPanel.refresh();
 	}
@@ -491,6 +504,14 @@ public class ChatGUI  extends JFrame implements Serializable {
 		if(diagnosticMode){
 			newMessage(Strings.DIAGNOSTIC_MODE + message);
 		}
+	}
+	
+	public String getName(){
+		return name;
+	}
+	
+	public String getStatus(){
+		return status;
 	}
 }
 

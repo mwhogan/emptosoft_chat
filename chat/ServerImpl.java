@@ -11,11 +11,11 @@ public class ServerImpl implements Server {
 	private List<String> messageList;
 	private List<String> statusList;
 	private boolean on;
-	private ChatGUI parent;
+	private Chat parent;
 	private ServerConnectionThread connectionThread;
 	private String interfaceVersion;
 
-	public ServerImpl (ChatGUI newParent, String newInterfaceVersion) throws Exception {
+	public ServerImpl (Chat newParent, String newInterfaceVersion) throws Exception {
 		super();
 		clientList = new ArrayList<Client>();
 		nameList = new ArrayList<String>();
@@ -85,7 +85,7 @@ public class ServerImpl implements Server {
 	//Returns all messages
 	public String getAll() throws Exception {
 		if(on == true){
-			String output = Strings.MESSAGE_SERVER_OWNER1 + parent.name + Strings.MESSAGE_SERVER_OWNER2 + "\n";
+			String output = Strings.MESSAGE_SERVER_OWNER1 + parent.getName() + Strings.MESSAGE_SERVER_OWNER2 + "\n";
 			for(String s: messageList) {
 				if(s != ""){
 					output = output + s;

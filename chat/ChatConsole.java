@@ -13,9 +13,9 @@ import java.util.Scanner;
 
 public class ChatConsole implements Chat {
 	private static final long serialVersionUID = -4734351929459053907L;
-	private boolean type;				//0 = Server, 1 = Client
+	private boolean role;				//0 = Server, 1 = Client
 	private String serverip;			//IP of server. IP of self if server.
-	private TypePanel typePanel;
+	private RolePanel rolePanel;
 	protected MessagePanel messagePanel;
 	private Client client;
 	private Server server;
@@ -139,7 +139,7 @@ public class ChatConsole implements Chat {
 		
 	public void quit(){
 	    try{
-	    	if(type == true){
+	    	if(role == true){
 	    		List<Client> clientList;
 	    		try {
 	    			clientList = server.getClients();
@@ -171,8 +171,8 @@ public class ChatConsole implements Chat {
         return sw.toString();
     }
 
-	public boolean getType(){
-		return type;
+	public boolean getRole(){
+		return role;
 	}
 	
 	public String getServerip(){
@@ -183,7 +183,7 @@ public class ChatConsole implements Chat {
 		return password;
 	}
 
-	public boolean setType(boolean newType, String newServerip){
+	public boolean setRole(boolean newRole, String newServerip){
 		diagnosticMode(Strings.MESSAGE_CLIENT_CHECKING_COMPATIBILITY + "\n");
 		try{
 			if(client.compatibilityCheck(newServerip, password, interfaceVersion)){
@@ -196,8 +196,8 @@ public class ChatConsole implements Chat {
 		} catch (Exception e){
 			diagnosticMode(Strings.MESSAGE_UNKNOWN_COMPATIBILITY + "\n");
 		}
-		//Switching type
-		if(newType == true){				//if going into server mode, serverip will be null
+		//Switching role
+		if(newRole == true){				//if going into server mode, serverip will be null
 			diagnosticMode(Strings.MESSAGE_TURNING_SERVER_OFF + "\n");
 			try {
 				server.off();
@@ -221,13 +221,13 @@ public class ChatConsole implements Chat {
 					System.exit(1);
 				}
 			}
-			type = newType;
+			role = newRole;
 			serverip = newServerip;
 			clearParticipants();
 			populateParticipants();
 			refresh();
-			typePanel.setIP(serverip);
-			diagnosticMode(Strings.DIAGNOSTIC_TYPE_SET);
+			rolePanel.setIP(serverip);
+			diagnosticMode(Strings.DIAGNOSTIC_ROLE_SET);
 			return true;
 		} else {
 			diagnosticMode(Strings.MESSAGE_TURNING_CLIENT_OFF + "\n");
@@ -247,12 +247,12 @@ public class ChatConsole implements Chat {
 				diagnosticMode(Strings.MESSAGE_SERVER_ON_FAILED + "\n");
 				System.exit(1);
 			}
-			type = newType;
+			role = newRole;
 			serverip = newServerip;
 			clearParticipants();
 			addParticipant(client);
 			refresh();
-			typePanel.setIP(Strings.PANEL_TYPE_CONNECTED + Strings.PANEL_TYPE_SERVER);
+			rolePanel.setIP(Strings.PANEL_ROLE_CONNECTED + Strings.PANEL_ROLE_SERVER);
 			return true;
 		}
 	}

@@ -30,9 +30,9 @@ import javax.swing.JOptionPane;
 
 public class ChatGUI  extends JFrame implements Serializable, Chat {
 	private static final long serialVersionUID = -4734351929459053907L;
-	private boolean type;				//0 = Server, 1 = Client
+	private boolean role;				//0 = Server, 1 = Client
 	private String serverip;			//IP of server. IP of self if server.
-	private TypePanel typePanel;
+	private RolePanel rolePanel;
 	private StatusPanel statusPanel;
 	private ParticipantsPanel participantsPanel;
 	private LogPanel logPanel;
@@ -75,7 +75,7 @@ public class ChatGUI  extends JFrame implements Serializable, Chat {
 		addWindowListener(new WindowAdapter() {
 		    public void windowClosing(WindowEvent ev) {
 		    	try{
-		    		if(type == true){
+		    		if(role == true){
 		    			List<Client> clientList;
 		    			try {
 		    				clientList = server.getClients();
@@ -221,8 +221,8 @@ public class ChatGUI  extends JFrame implements Serializable, Chat {
         return sw.toString();
     }
 
-	public boolean getType(){
-		return type;
+	public boolean getRole(){
+		return role;
 	}
 	
 	public String getServerip(){
@@ -240,7 +240,7 @@ public class ChatGUI  extends JFrame implements Serializable, Chat {
 
 	}
 
-	public boolean setType(boolean newType, String newServerip){
+	public boolean setRole(boolean newRole, String newServerip){
 		//PopupThread popupThread = new PopupThread(this);
 		//popupThread.start();
 		//Popup popup = popupThread.getPopup();
@@ -263,8 +263,8 @@ public class ChatGUI  extends JFrame implements Serializable, Chat {
 			diagnosticMode(Strings.MESSAGE_UNKNOWN_COMPATIBILITY + "\n");
 			//popup.dispose();
 		}
-		//Switching type
-		if(newType == true){				//if going into server mode, serverip will be null
+		//Switching role
+		if(newRole == true){				//if going into server mode, serverip will be null
 			//popup.setMessage(Strings.MESSAGE_TURNING_SERVER_OFF);
 			diagnosticMode(Strings.MESSAGE_TURNING_SERVER_OFF + "\n");
 			try {
@@ -296,13 +296,13 @@ public class ChatGUI  extends JFrame implements Serializable, Chat {
 					System.exit(1);
 				}
 			}
-			type = newType;
+			role = newRole;
 			serverip = newServerip;
 			clearParticipants();
 			populateParticipants();
 			refresh();
-			typePanel.setIP(serverip);
-			diagnosticMode(Strings.DIAGNOSTIC_TYPE_SET);
+			rolePanel.setIP(serverip);
+			diagnosticMode(Strings.DIAGNOSTIC_ROLE_SET);
 			//popup.dispose();
 			return true;
 		} else {
@@ -329,12 +329,12 @@ public class ChatGUI  extends JFrame implements Serializable, Chat {
 				//popup.dispose();
 				System.exit(1);
 			}
-			type = newType;
+			role = newRole;
 			serverip = newServerip;
 			clearParticipants();
 			addParticipant(client);
 			refresh();
-			typePanel.setIP(Strings.PANEL_TYPE_CONNECTED + Strings.PANEL_TYPE_SERVER);
+			rolePanel.setIP(Strings.PANEL_ROLE_CONNECTED + Strings.PANEL_ROLE_SERVER);
 			//popup.dispose();
 			return true;
 		}
@@ -352,29 +352,29 @@ public class ChatGUI  extends JFrame implements Serializable, Chat {
 		result.setMaximumSize(new Dimension(200,100000));
 		result.setMinimumSize(new Dimension(200,300));
 		result.setPreferredSize(new Dimension(200,480));
-		result.add(createTypePanel(),BorderLayout.NORTH);		//Client or server
+		result.add(createRolePanel(),BorderLayout.NORTH);		//Client or server
 		result.add(createParticipantsPanel(),BorderLayout.CENTER);	//People in the current conversation
 		result.add(createStatusPanel(),BorderLayout.SOUTH);	//Status (e.g. online, away)
 		return result;
 	}
 
-	private JComponent createTypePanel() {
-		typePanel = new TypePanel(){
+	private JComponent createRolePanel() {
+		rolePanel = new RolePanel(){
 			private static final long serialVersionUID = 1L;
-			protected boolean setTypeLinky(boolean newType) {
+			protected boolean setRoleLinky(boolean newRole) {
 				String ip = null;
-				if(newType == true){
+				if(newRole == true){
 					ip = JOptionPane.showInputDialog(this,Strings.INPUT_SERVERIP,"Emptosoft Chat v" + version,JOptionPane.QUESTION_MESSAGE);
 					password = "Chat Server";
 					if(ip == null){
 						return false;
 					}
 				}
-				return setType(newType, ip);
+				return setRole(newRole, ip);
 			}
 		};
-		addBorder(typePanel,Strings.PANEL_TYPE);
-		return typePanel; 
+		addBorder(rolePanel,Strings.PANEL_ROLE);
+		return rolePanel; 
 	}
 
 	private JComponent createParticipantsPanel() {

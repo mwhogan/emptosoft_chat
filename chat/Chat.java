@@ -2,7 +2,7 @@ package chat;
 
 public interface Chat {
 
-	public boolean setType(boolean newType, String newServerip);
+	public boolean setRole(boolean newRole, String newServerip);
 
 	public void newMessage(String message);
 
